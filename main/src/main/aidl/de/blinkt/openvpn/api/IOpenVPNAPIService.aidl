@@ -73,4 +73,7 @@ interface IOpenVPNAPIService {
     * up to now the only extra that can be put is a boolean "de.blinkt.openvpn.api.ALLOW_VPN_BYPASS"
     */
     APIVpnProfile addNewVPNProfileWithExtras (String name, boolean userEditable, String config, in Bundle extras);
+
+    /** Set the default VPN profile by existing profile name */
+    boolean setDefaultProfile (String name);
 }

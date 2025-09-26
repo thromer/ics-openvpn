@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.net.VpnService;
 import android.os.Binder;
 import android.os.Build;
@@ -37,6 +38,7 @@ import de.blinkt.openvpn.core.ConfigParser.ConfigParseError;
 import de.blinkt.openvpn.core.ConnectionStatus;
 import de.blinkt.openvpn.core.IOpenVPNServiceInternal;
 import de.blinkt.openvpn.core.OpenVPNService;
+import de.blinkt.openvpn.core.Preferences;
 import de.blinkt.openvpn.core.ProfileManager;
 import de.blinkt.openvpn.core.VPNLaunchHelper;
 import de.blinkt.openvpn.core.VpnStatus;
@@ -329,6 +331,21 @@ public class ExternalOpenVPNService extends Service implements StateListener {
             if (mService != null)
                 mService.userPause(false);
 
+        }
+
+        @Override
+        public boolean setDefaultProfile(String profileName) throws RemoteException {
+            mExtAppDb.checkOpenVPNPermission(getPackageManager());
+            ProfileManager pm = ProfileManager.getInstance(getBaseContext());
+            VpnProfile profile = pm.getProfileByName(profileName);
+            if (profile == null) {
+                return false;
+            }
+            SharedPreferences prefs = Preferences.getDefaultSharedPreferences(getBaseContext());
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("alwaysOnVpn", profile.getUUIDString());
+            editor.apply();
+            return true;
         }
     };
 

@@ -10,6 +10,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -19,7 +20,9 @@ import de.blinkt.openvpn.LaunchVPN;
 import de.blinkt.openvpn.VpnProfile;
 import de.blinkt.openvpn.core.IOpenVPNServiceInternal;
 import de.blinkt.openvpn.core.OpenVPNService;
+import de.blinkt.openvpn.core.Preferences;
 import de.blinkt.openvpn.core.ProfileManager;
+import de.blinkt.openvpn.core.VpnStatus;
 
 public class RemoteAction extends Activity {
 
@@ -48,7 +51,7 @@ public class RemoteAction extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+	super.onCreate(savedInstanceState);
     }
 
     @Override
@@ -96,6 +99,18 @@ public class RemoteAction extends Activity {
                     startVPN.putExtra(OpenVPNService.EXTRA_START_REASON, ".api.ConnectVPN call");
                     startVPN.setAction(Intent.ACTION_MAIN);
                     startActivity(startVPN);
+                }
+                break;
+            case ".api.SetDefaultVPN":
+                String defaultVpnName = intent.getStringExtra(EXTRA_NAME);
+                VpnProfile defaultProfile = ProfileManager.getInstance(this).getProfileByName(defaultVpnName);
+                if (defaultProfile == null) {
+                    Toast.makeText(this, String.format("Vpn profile %s from API call not found", defaultVpnName), Toast.LENGTH_LONG).show();
+                } else {
+                    SharedPreferences prefs = Preferences.getDefaultSharedPreferences(this);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putString("alwaysOnVpn", defaultProfile.getUUIDString());
+                    editor.apply();
                 }
                 break;
         }
