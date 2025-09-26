@@ -111,6 +111,10 @@ public class ExternalOpenVPNService extends Service implements StateListener {
 
     }
 
+    private APIVpnProfile newAPIVpnProfile(VpnProfile vp) {
+	return new APIVpnProfile(vp.getUUIDString(), vp.mName, vp.mUserEditable, vp.mProfileCreator);
+    }
+
     private final IOpenVPNAPIService.Stub mBinder = new IOpenVPNAPIService.Stub() {
 
         @Override
@@ -123,7 +127,7 @@ public class ExternalOpenVPNService extends Service implements StateListener {
 
             for (VpnProfile vp : pm.getProfiles()) {
                 if (!vp.profileDeleted)
-                    profiles.add(new APIVpnProfile(vp.getUUIDString(), vp.mName, vp.mUserEditable, vp.mProfileCreator));
+                    profiles.add(newAPIVpnProfile(vp));
             }
 
             return profiles;
@@ -234,7 +238,7 @@ public class ExternalOpenVPNService extends Service implements StateListener {
                 vp.addChangeLogEntry("AIDL API created profile");
                 pm.saveProfile(ExternalOpenVPNService.this, vp);
                 pm.saveProfileList(ExternalOpenVPNService.this);
-                return new APIVpnProfile(vp.getUUIDString(), vp.mName, vp.mUserEditable, vp.mProfileCreator);
+                return newAPIVpnProfile(vp);
             } catch (IOException e) {
                 VpnStatus.logException(e);
                 return null;
@@ -333,19 +337,34 @@ public class ExternalOpenVPNService extends Service implements StateListener {
 
         }
 
+	@Override
+	public APIVpnProfile getDefaultProfile() throws RemoteException {
+            ProfileManager pm = ProfileManager.getInstance(getBaseContext());
+            SharedPreferences prefs = Preferences.getDefaultSharedPreferences(getBaseContext());
+	    String profileUUID = prefs.getString("alwaysOnVpn", null);
+	    if (profileUUID == null) {
+		return null;
+	    }
+	    VpnProfile vp = ProfileManager.get(getBaseContext(), profileUUID);
+	    if (vp.checkProfile(getApplicationContext()) != R.string.no_error_found) {
+		VpnStatus.logInfo("Default profile is currently set to unknown UUID " + profileUUID);
+		return null;
+	    }
+	    APIVpnProfile result = newAPIVpnProfile(vp);
+	    return result;
+	}
+
         @Override
-        public boolean setDefaultProfile(String profileName) throws RemoteException {
+        public void setDefaultProfile(String profileUUID) throws RemoteException {
             mExtAppDb.checkOpenVPNPermission(getPackageManager());
             ProfileManager pm = ProfileManager.getInstance(getBaseContext());
-            VpnProfile profile = pm.getProfileByName(profileName);
-            if (profile == null) {
-                return false;
-            }
+            VpnProfile vp = ProfileManager.get(getBaseContext(), profileUUID);
+            if (vp.checkProfile(getApplicationContext()) != R.string.no_error_found)
+                throw new RemoteException(getString(vp.checkProfile(getApplicationContext())));
             SharedPreferences prefs = Preferences.getDefaultSharedPreferences(getBaseContext());
             SharedPreferences.Editor editor = prefs.edit();
-            editor.putString("alwaysOnVpn", profile.getUUIDString());
+            editor.putString("alwaysOnVpn", vp.getUUIDString());
             editor.apply();
-            return true;
         }
     };
 

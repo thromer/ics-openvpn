@@ -74,6 +74,9 @@ interface IOpenVPNAPIService {
     */
     APIVpnProfile addNewVPNProfileWithExtras (String name, boolean userEditable, String config, in Bundle extras);
 
-    /** Set the default VPN profile by existing profile name */
-    boolean setDefaultProfile (String name);
+    /** Get the current default profile, or null if there is no default */
+    @nullable APIVpnProfile getDefaultProfile();
+
+    /** Set the default profile by UUID */
+    void setDefaultProfile (String profileUUID);
 }
