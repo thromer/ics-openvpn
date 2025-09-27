@@ -197,11 +197,11 @@ public class MainFragment extends Fragment implements View.OnClickListener, Hand
 
         try {
             List<APIVpnProfile> list = mService.getProfiles();
-	    APIVpnProfile defaultProfile = mService.getDefaultProfile();
-	    String defaultUUID = defaultProfile != null ? defaultProfile.mUUID : null;
+            APIVpnProfile defaultProfile = mService.getDefaultProfile();
+            String defaultUUID = defaultProfile != null ? defaultProfile.mUUID : null;
             String all="List:";
             for(APIVpnProfile vp:list.subList(0, Math.min(5, list.size()))) {
-		String suffix = (vp.mUUID.equals(defaultUUID)) ? " (default)" : "";
+                String suffix = (vp.mUUID.equals(defaultUUID)) ? " (default)" : "";
                 all = all + vp.mName + ":" + vp.mUUID + suffix + "\n";
             }
 
@@ -332,7 +332,7 @@ public class MainFragment extends Fragment implements View.OnClickListener, Hand
                 }
             if(requestCode==SET_DEFAULT_PROFILE_BYUUID)
                 try {
-		    mService.setDefaultProfile(mStartUUID);
+                    mService.setDefaultProfile(mStartUUID);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }

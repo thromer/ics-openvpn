@@ -337,22 +337,22 @@ public class ExternalOpenVPNService extends Service implements StateListener {
 
         }
 
-	@Override
-	public APIVpnProfile getDefaultProfile() throws RemoteException {
+        @Override
+        public APIVpnProfile getDefaultProfile() throws RemoteException {
             ProfileManager pm = ProfileManager.getInstance(getBaseContext());
             SharedPreferences prefs = Preferences.getDefaultSharedPreferences(getBaseContext());
-	    String profileUUID = prefs.getString("alwaysOnVpn", null);
-	    if (profileUUID == null) {
-		return null;
-	    }
-	    VpnProfile vp = ProfileManager.get(getBaseContext(), profileUUID);
-	    if (vp.checkProfile(getApplicationContext()) != R.string.no_error_found) {
-		VpnStatus.logInfo("Default profile is currently set to unknown UUID " + profileUUID);
-		return null;
-	    }
-	    APIVpnProfile result = newAPIVpnProfile(vp);
-	    return result;
-	}
+            String profileUUID = prefs.getString("alwaysOnVpn", null);
+            if (profileUUID == null) {
+                return null;
+            }
+            VpnProfile vp = ProfileManager.get(getBaseContext(), profileUUID);
+            if (vp.checkProfile(getApplicationContext()) != R.string.no_error_found) {
+                VpnStatus.logInfo("Default profile is currently set to unknown UUID " + profileUUID);
+                return null;
+            }
+            APIVpnProfile result = newAPIVpnProfile(vp);
+            return result;
+        }
 
         @Override
         public void setDefaultProfile(String profileUUID) throws RemoteException {
