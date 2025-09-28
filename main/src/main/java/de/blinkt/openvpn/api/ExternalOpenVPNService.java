@@ -111,7 +111,7 @@ public class ExternalOpenVPNService extends Service implements StateListener {
 
     }
 
-    private APIVpnProfile newAPIVpnProfile(VpnProfile vp) {
+    private APIVpnProfile apiVpnProfileFromVpnProfile(VpnProfile vp) {
 	return new APIVpnProfile(vp.getUUIDString(), vp.mName, vp.mUserEditable, vp.mProfileCreator);
     }
 
@@ -127,7 +127,7 @@ public class ExternalOpenVPNService extends Service implements StateListener {
 
             for (VpnProfile vp : pm.getProfiles()) {
                 if (!vp.profileDeleted)
-                    profiles.add(newAPIVpnProfile(vp));
+                    profiles.add(apiVpnProfileFromVpnProfile(vp));
             }
 
             return profiles;
@@ -238,7 +238,7 @@ public class ExternalOpenVPNService extends Service implements StateListener {
                 vp.addChangeLogEntry("AIDL API created profile");
                 pm.saveProfile(ExternalOpenVPNService.this, vp);
                 pm.saveProfileList(ExternalOpenVPNService.this);
-                return newAPIVpnProfile(vp);
+                return apiVpnProfileFromVpnProfile(vp);
             } catch (IOException e) {
                 VpnStatus.logException(e);
                 return null;
@@ -339,6 +339,7 @@ public class ExternalOpenVPNService extends Service implements StateListener {
 
         @Override
         public APIVpnProfile getDefaultProfile() throws RemoteException {
+            mExtAppDb.checkOpenVPNPermission(getPackageManager());
             ProfileManager pm = ProfileManager.getInstance(getBaseContext());
             SharedPreferences prefs = Preferences.getDefaultSharedPreferences(getBaseContext());
             String profileUUID = prefs.getString("alwaysOnVpn", null);
@@ -350,7 +351,7 @@ public class ExternalOpenVPNService extends Service implements StateListener {
                 VpnStatus.logInfo("Default profile is currently set to unknown UUID " + profileUUID);
                 return null;
             }
-            APIVpnProfile result = newAPIVpnProfile(vp);
+            APIVpnProfile result = apiVpnProfileFromVpnProfile(vp);
             return result;
         }
 

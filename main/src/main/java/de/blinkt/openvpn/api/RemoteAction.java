@@ -64,6 +64,33 @@ public class RemoteAction extends Activity {
 
     }
 
+    private void connectVPN(Intent intent) {
+        String vpnName = intent.getStringExtra(EXTRA_NAME);
+        VpnProfile profile = ProfileManager.getInstance(this).getProfileByName(vpnName);
+        if (profile == null) {
+            Toast.makeText(this, String.format("Vpn profile %s from API call not found", vpnName), Toast.LENGTH_LONG).show();
+        } else {
+            Intent startVPN = new Intent(this, LaunchVPN.class);
+            startVPN.putExtra(LaunchVPN.EXTRA_KEY, profile.getUUID().toString());
+            startVPN.putExtra(OpenVPNService.EXTRA_START_REASON, ".api.ConnectVPN call");
+            startVPN.setAction(Intent.ACTION_MAIN);
+            startActivity(startVPN);
+        }
+    }
+
+    private void setDefaultVPN(Intent intent) {
+        String defaultVpnName = intent.getStringExtra(EXTRA_NAME);
+        VpnProfile defaultProfile = ProfileManager.getInstance(this).getProfileByName(defaultVpnName);
+        if (defaultProfile == null) {
+            Toast.makeText(this, String.format("Vpn profile %s from API call not found", defaultVpnName), Toast.LENGTH_LONG).show();
+        } else {
+            SharedPreferences prefs = Preferences.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("alwaysOnVpn", defaultProfile.getUUIDString());
+            editor.apply();
+        }
+    }
+
     private void performAction() throws RemoteException {
 
         if (!mService.isAllowedExternalApp(getCallingPackage())) {
@@ -89,29 +116,10 @@ public class RemoteAction extends Activity {
                 mService.userPause(false);
                 break;
             case ".api.ConnectVPN":
-                String vpnName = intent.getStringExtra(EXTRA_NAME);
-                VpnProfile profile = ProfileManager.getInstance(this).getProfileByName(vpnName);
-                if (profile == null) {
-                    Toast.makeText(this, String.format("Vpn profile %s from API call not found", vpnName), Toast.LENGTH_LONG).show();
-                } else {
-                    Intent startVPN = new Intent(this, LaunchVPN.class);
-                    startVPN.putExtra(LaunchVPN.EXTRA_KEY, profile.getUUID().toString());
-                    startVPN.putExtra(OpenVPNService.EXTRA_START_REASON, ".api.ConnectVPN call");
-                    startVPN.setAction(Intent.ACTION_MAIN);
-                    startActivity(startVPN);
-                }
+                connectVPN(intent);
                 break;
             case ".api.SetDefaultVPN":
-                String defaultVpnName = intent.getStringExtra(EXTRA_NAME);
-                VpnProfile defaultProfile = ProfileManager.getInstance(this).getProfileByName(defaultVpnName);
-                if (defaultProfile == null) {
-                    Toast.makeText(this, String.format("Vpn profile %s from API call not found", defaultVpnName), Toast.LENGTH_LONG).show();
-                } else {
-                    SharedPreferences prefs = Preferences.getDefaultSharedPreferences(this);
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putString("alwaysOnVpn", defaultProfile.getUUIDString());
-                    editor.apply();
-                }
+                setDefaultVPN(intent);
                 break;
         }
         finish();
